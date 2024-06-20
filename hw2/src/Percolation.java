@@ -1,100 +1,80 @@
 import edu.princeton.cs.algs4.WeightedQuickUnionUF;
-import java.util.ArrayList;
 
 public class Percolation {
-    private ArrayList<Integer>[][] grid;
+    private WeightedQuickUnionUF parent;
+    private int[] openness;
     private int N;
-    private ArrayList<ArrayList<Integer>> virtual_top;
-    private ArrayList<ArrayList<Integer>> virtual_bottom;
+
 
     public Percolation(int N) {
+        this.parent = new WeightedQuickUnionUF(N*N+2);
         this.N = N;
-        this.grid = new ArrayList[N][N];
-        this.virtual_top = new ArrayList<>();
-        this.virtual_bottom = new ArrayList<>();
-        for (int i = 0; i < N; i++) {
-            for (int j = 0; j < N; j++) {
-                grid[i][j] = new ArrayList<>();
-            }
-        }
+        this.openness = new int[N*N];
     }
 
-    public ArrayList<Integer> hasOpenNeighbor(int row, int col) {
-        int[][] directions = {{-1, 0}, {1, 0}, {0, -1}, {0, 1}};
-        for (int[] dir: directions) {
-            int n_row = row + dir[0];
-            int n_col = col + dir[1];
-            if (n_row >= 0 && n_row < N && n_col >= 0 && n_col < N){
-                if (!grid[n_row][n_col].isEmpty()) {
-                    ArrayList<Integer> neighbor = new ArrayList<>();
-                    neighbor.add(n_row);
-                    neighbor.add(n_col);
-                    return neighbor;
-                }
-            }
+    public int[] hasOpenNeighbor(int row, int col) {
+        int index = row*N + col + 1;
+        int top = index - N;
+        int bottom = index + N;
+        int left = index - 1;
+        int right = index + 1;
+        int[] neighbor = new int[4];
+        if (top > 0 && openness[top-1] == 1) {
+            neighbor[0] = top;
         }
-        return new ArrayList<>();
-    }
-
-    public ArrayList<Integer> find(int row, int col) {
-        int p_row = row;
-        int p_col = col;
-        while (!grid[p_row][p_col].isEmpty()) {
-            p_row = grid[p_row][p_col].get(0);
-            p_col = grid[p_row][p_col].get(1);
+        if (bottom <= N*N && openness[bottom-1] == 1) {
+            neighbor[1] = bottom;
         }
-        ArrayList<Integer> root = new ArrayList<>();
-        root.add(p_row);
-        root.add(p_col);
-        return root;
+        if (left % N != 0 && left > 0 && openness[left-1] == 1) {
+            neighbor[2] = left;
+        }
+        if (right % N != 1 && right <= N*N && openness[right-1] == 1) {
+            neighbor[3] = right;
+        }
+        return neighbor;
     }
 
     public void open(int row, int col) {
-        if (!hasOpenNeighbor(row, col).isEmpty()){
-            grid[row][col] = hasOpenNeighbor(row, col);
+        int index =  row*N + col + 1;
+        openness[index-1] = 1;
+        int[] comparisonArray = {0, 0, 0, 0};
+        if (!hasOpenNeighbor(row, col).equals(comparisonArray)) {
+            for (int item: hasOpenNeighbor(row, col)) {
+                if (item != 0) {
+                    parent.union(index, item);
+                }
+                if (row == 0) {
+                    parent.union(index, 0);
+                }
+                if (row == N) {
+                    parent.union(index, N*N+1);
+                }
+            }
         }
-        ArrayList<Integer> new_root = new ArrayList<>();
-        new_root.add(-1);
-        new_root.add(-1);
-        grid[row][col] = new_root;
     }
 
     public boolean isOpen(int row, int col) {
-        if (grid[row][col].isEmpty()) {
-            return false;
+        int index =  row*N + col + 1;
+        if (openness[index-1] == 1) {
+            return true;
         }
-        return true;
+        return false;
     }
 
     public boolean isFull(int row, int col) {
-        for (ArrayList<Integer> top: virtual_top) {
-            if (find(row, col) == find(top.get(0), top.get(1))) {
-                return true;
-            }
-        }
-        return false;
+        int index =  row*N + col + 1;
+        return parent.connected(index, 0);
     }
 
     public int numberOfOpenSites() {
-        int num = 0;
-        for (int i = 0; i < N; i++) {
-            for (int j = 0; j < N; j++) {
-                if (!grid[i][j].isEmpty()) {
-                    num += 1;
-                }
-            }
+        int sum = 0;
+        for (int i = 0; i < N*N; i++) {
+            sum += openness[i];
         }
-        return num;
+        return sum;
     }
 
     public boolean percolates() {
-        for (ArrayList<Integer> top: virtual_top) {
-            for (ArrayList<Integer> bottom: virtual_bottom) {
-                if (find(top.get(0), top.get(1)) == find(bottom.get(0), bottom.get(1))) {
-                    return true;
-                }
-            }
-        }
-        return false;
+        return parent.connected(0, N*N+1);
     }
 }
