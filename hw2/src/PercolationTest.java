@@ -33,12 +33,21 @@ public class PercolationTest {
         perc4.open(2, 2);
         assert !perc4.percolates() : "Test Case 4 Failed: Grid should not percolate with disconnected path";
 
-        // Test Case 5: Check number of open sites
-        Percolation perc5 = new Percolation(3);
+        // Test Case 4: 4x4 grid with no percolation
+        Percolation perc5 = new Percolation(4);
         perc5.open(0, 0);
-        perc5.open(1, 1);
-        perc5.open(2, 2);
-        assert perc5.numberOfOpenSites() == 3 : "Test Case 5 Failed: Number of open sites should be 3";
+        perc5.open(1, 0);
+        perc5.open(2, 0);
+        perc5.open(2, 1);
+        perc5.open(3, 0);
+        assert perc5.percolates() : "Test Case 5 Failed: Grid should percolate after opening a vertical path";
+
+        // Test Case 5: Check number of open sites
+        Percolation perc6 = new Percolation(3);
+        perc6.open(0, 0);
+        perc6.open(1, 1);
+        perc6.open(2, 2);
+        assert perc5.numberOfOpenSites() == 3 : "Test Case 6 Failed: Number of open sites should be 3";
 
         System.out.println("All test cases passed!");
     }
